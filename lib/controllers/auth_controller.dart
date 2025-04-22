@@ -66,6 +66,8 @@ class AuthController extends GetxController {
 
       if (response['success']) {
         currentUser.value = response['user'];
+        currentUser['profileImageUrl'] =
+            'http://10.0.2.2:3000/${currentUser['profileImage']}?v=${DateTime.now().millisecondsSinceEpoch}';
         print("✅ ข้อมูลผู้ใช้: ${currentUser.value}");
       } else {
         Get.snackbar('Error', response['message']);
@@ -82,16 +84,25 @@ class AuthController extends GetxController {
       String username, String email, String phone) async {
     isLoading(true);
     try {
+      File? image = profileImage.value;
       print(
-          "📌 Log: กำลังอัปเดตข้อมูล -> username: $username, email: $email, phone: $phone");
+          "📌 Log: กำลังอัปเดตข้อมูล -> username: $username, email: $email, phone: $phone, image: ${image?.path}");
 
-      final response = await _authService.updateProfile(username, email, phone);
+      final response = await _authService.updateProfileWithImage(
+        username: username,
+        email: email,
+        phone: phone,
+        image: image,
+      );
       print("📌 Log: Response จาก API หลังอัปเดต -> $response");
 
       if (response['success']) {
         currentUser.value = response['user'];
+        currentUser['profileImageUrl'] =
+            'http://10.0.2.2:3000/${currentUser['profileImage']}';
         print("✅ ข้อมูลผู้ใช้ที่ถูกอัปเดต -> ${currentUser.value}");
         Get.snackbar('Success', 'ข้อมูลถูกอัปเดตแล้ว');
+        profileImage.value = null; // เคลียร์รูปหลังอัปเดตสำเร็จ
         Get.back();
       } else {
         print("❌ ERROR: อัปเดตข้อมูลล้มเหลว -> ${response['message']}");
@@ -103,6 +114,11 @@ class AuthController extends GetxController {
     } finally {
       isLoading(false);
     }
+  }
+
+  var profileImage = Rx<File?>(null);
+  void setProfileImage(File image) {
+    profileImage.value = image;
   }
 
   void logout() {

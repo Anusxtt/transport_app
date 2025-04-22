@@ -9,7 +9,6 @@ import 'edit_profile_view.dart';
 
 class ProfileView extends StatelessWidget {
   ProfileView({Key? key}) : super(key: key);
-
   final AuthController authController = Get.put(AuthController());
 
   @override
@@ -40,6 +39,9 @@ class ProfileView extends StatelessWidget {
         }
 
         var user = authController.currentUser;
+        String baseUrl = 'http://10.0.2.2:3000'; // URL ของเซิร์ฟเวอร์
+        String imageUrl = '$baseUrl/${user['profileImage']}';
+
         return SingleChildScrollView(
           padding: EdgeInsets.all(16.0),
           child: Column(
@@ -50,9 +52,8 @@ class ProfileView extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 50,
                   backgroundImage: user['profileImage'] != null
-                      ? NetworkImage(user['profileImage'])
+                      ? NetworkImage(imageUrl)
                       : AssetImage('assets/profile.jpg') as ImageProvider,
-                  child: Icon(Icons.camera_alt, color: Colors.white),
                 ),
               ),
               SizedBox(height: 10),

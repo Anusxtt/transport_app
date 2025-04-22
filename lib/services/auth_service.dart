@@ -145,4 +145,52 @@ class AuthService {
       return {'success': false, 'message': 'Failed to connect to server'};
     }
   }
+
+  Future<Map<String, dynamic>> updateProfileWithImage({
+    required String username,
+    required String email,
+    required String phone,
+    File? image,
+  }) async {
+    String? token = box.read('token');
+    print("📌 Log: Token ที่ใช้สำหรับอัปเดต -> $token");
+
+    if (token == null || token.isEmpty) {
+      return {'success': false, 'message': 'Token not found'};
+    }
+
+    try {
+      final uri = Uri.parse('$baseUrl/profile');
+      final request = http.MultipartRequest('PUT', uri)
+        ..headers['Authorization'] = 'Bearer $token'
+        ..fields['username'] = username
+        ..fields['email'] = email
+        ..fields['phone'] = phone;
+
+      if (image != null) {
+        print("📸 แนบไฟล์ภาพ -> ${image.path}");
+        request.files.add(await http.MultipartFile.fromPath(
+          'image', // ต้องตรงกับ field name ที่ backend รับ
+          image.path,
+        ));
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print("📌 Log: Response จาก API -> ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to update profile (${response.statusCode})'
+        };
+      }
+    } catch (e) {
+      print("❌ ERROR: อัปเดตโปรไฟล์ล้มเหลว -> $e");
+      return {'success': false, 'message': 'Failed to connect to server'};
+    }
+  }
 }

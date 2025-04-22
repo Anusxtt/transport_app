@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controllers/auth_controller.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfileView extends StatelessWidget {
   final AuthController authController = Get.find<AuthController>();
@@ -13,7 +16,8 @@ class EditProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var user = authController.currentUser;
-
+    String baseUrl = 'http://10.0.2.2:3000'; // URL ของเซิร์ฟเวอร์
+    String imageUrl = '$baseUrl/${user['profileImage']}';
     // กำหนดค่าเริ่มต้นของช่องกรอกข้อมูล
     usernameController.text = user['username'] ?? "";
     emailController.text = user['email'] ?? "";
@@ -45,6 +49,45 @@ class EditProfileView extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
+            // รูปโปรไฟล์
+            Center(
+              child: GestureDetector(
+                onTap: () async {
+                  final picked = await ImagePicker()
+                      .pickImage(source: ImageSource.gallery);
+                  if (picked != null) {
+                    authController.setProfileImage(
+                        File(picked.path)); // ใช้ controller เก็บภาพ
+                  }
+                },
+                child: Obx(() {
+                  final image = authController.profileImage.value;
+                  final profileImageUrl =
+                      authController.currentUser['profileImageUrl'];
+                  return CircleAvatar(
+                    radius: 55,
+                    backgroundImage: image != null
+                        ? FileImage(image)
+                        : (user['profileImageUrl'] != null
+                            ? NetworkImage(
+                                '${user['profileImageUrl']}?v=${DateTime.now().millisecondsSinceEpoch}')
+                            : AssetImage(
+                                'assets/profile.jpg')) as ImageProvider,
+                    backgroundColor: Colors.grey[300],
+                    child: Align(
+                      alignment: Alignment.bottomRight,
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.orange,
+                        child: Icon(Icons.camera_alt,
+                            color: Colors.white, size: 18),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            SizedBox(height: 20),
 
             // ช่องกรอกข้อมูล
             _buildTextField("ชื่อผู้ใช้", Icons.person, usernameController),
@@ -64,7 +107,6 @@ class EditProfileView extends StatelessWidget {
                     emailController.text,
                     phoneController.text,
                   );
-                  Get.back();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
